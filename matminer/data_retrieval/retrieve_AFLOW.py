@@ -6,10 +6,12 @@ from pymatgen.core.structure import Structure
 
 from matminer.data_retrieval.retrieve_base import BaseDataRetrieval
 
-from aflow import K  # module of aflow Keyword properties
+from aflow import msg, K  # module of aflow Keyword properties
 from aflow.caster import cast
 from aflow.control import Query
 from aflow.entries import AflowFile
+
+msg.set_verbosity(0)    # Print aflow errors to screen
 
 __author__ = ['Maxwell Dylla <280mtd@gmail.com>']
 
@@ -87,7 +89,7 @@ class AFLOWDataRetrieval(BaseDataRetrieval):
             df[keyword] = self._cast_series(df[keyword])
 
         # collects the relaxed structures if requested
-        if 'structure' in files:
+        if 'structure' in files or []:
             df['structure'] = [self.get_relaxed_structure(url) for url in
                                df['aurl'].values]
 
@@ -140,6 +142,8 @@ class AFLOWDataRetrieval(BaseDataRetrieval):
 
         # requests the first page of results to determine number of pages
         query._request(1, query.k)
+        if 1 not in query.responses.keys():
+            raise ValueError("An error occurred with the API request")
         page_limit = (query._N // query.k) + 1
         if request_limit and (page_limit > request_limit):
             page_limit = request_limit
